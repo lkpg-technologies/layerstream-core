@@ -1,0 +1,31 @@
+h2 {
+  border: solid black 1px;
+}
+
+#app {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  border: none;
+}
+
+.hidden {
+  display: none;
+}
+
+.fullscreen, .fullscreen > * {
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+}
