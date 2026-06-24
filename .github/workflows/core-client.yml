@@ -1,10 +1,12 @@
-name: Build and Package
+name: Build and Release
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -14,7 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -23,18 +25,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build project
+      - name: Build
         run: npm run build
 
       - name: Read package version
         id: version
-        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+        run: |
+          echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
       - name: Create tarball
         run: |
           tar -czf my-project-${VERSION}.tar.gz dist
 
-      - uses: actions/upload-artifact@v4
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
         with:
-          name: my-project-${{ env.VERSION }}
-          path: my-project-${{ env.VERSION }}.tar.gz
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            my-project-${{ env.VERSION }}.tar.gz
