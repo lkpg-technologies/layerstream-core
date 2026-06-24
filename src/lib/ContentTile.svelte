@@ -26,7 +26,6 @@
 
 <style>
     .content-tile {
-        /* border: solid red 2px; */
         background-color: white;
         object-fit: cover;
     }
@@ -38,6 +37,5 @@
         width: 100%;
         height: 100%;
         display: block;
-        /* object-fit: fill; */
     }
 </style>
