@@ -26,13 +26,15 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Create ZIP archive
-        run: |
-          cd dist
-          zip -r ../dist.zip .
+      - name: Read package version
+        id: version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Create tarball
+        run: |
+          tar -czf my-project-${VERSION}.tar.gz dist
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: dist.zip
+          name: my-project-${{ env.VERSION }}
+          path: my-project-${{ env.VERSION }}.tar.gz
