@@ -8,6 +8,12 @@ on:
 permissions:
   contents: write
 
+env:
+  VITE_MACHINE_CLIENT_API: http://localhost:8080
+  VITE_SYMLINK_NAME: current
+  VITE_POLL_TIMEOUT_SECONDS: 10
+  CURRENT_BUNDLE_PATH: /home/kiosk/bundles/current
+
 jobs:
   build:
     if: github.event.pull_request.merged == true
