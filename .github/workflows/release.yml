@@ -50,6 +50,8 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_CORE_VERSION: ${{ steps.version.outputs.version }}
         run: npm run build
 
       - name: Create tarball
