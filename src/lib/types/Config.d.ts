@@ -1,6 +1,4 @@
-import type { PageType } from "./PageType";
+import type { LegacyConfig } from "../versions/legacy/types/Config";
+import type { ConfigV1 } from "../versions/1/types";
 
-export interface Config {
-    networkRequired?: boolean,
-    pages: PageType[]
-}
+export type Config = LegacyConfig | ConfigV1;

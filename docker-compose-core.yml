@@ -1,7 +1,7 @@
 services:
   frontend:
     # Keep in sync with .nvmrc
-    image: "node:25-alpine"
+    image: "node:24-alpine"
     restart: "no"
     # Host networking exposes Vite on 5173 directly; `ports` is ignored in this mode
     network_mode: "host"

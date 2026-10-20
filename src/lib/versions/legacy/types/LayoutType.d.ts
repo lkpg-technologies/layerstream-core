@@ -1,4 +1,4 @@
-import type { Content } from "./content"
+import type { Content } from "./Content"
 
 export interface LayoutType {
     template: string[][],

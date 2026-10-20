@@ -1,49 +1,49 @@
 <script lang="ts">
-    import { writable } from "svelte/store";
-    import { config } from "../../stores/config";
+    import { onMount } from "svelte";
     import PageV1 from "./PageV1.svelte";
+    import type { ConfigV1 } from "./types";
+    import { getActiveScreenId, msUntilNextSecond } from "../../schedule";
+    import { displayStatus, reportError } from "../../stability";
 
-    const screens = $derived($config.screens)
-    const screenOrder = $derived($config.screenOrder)
-    const currentScreen = writable<String>("");
+    const { config }: { config: ConfigV1 } = $props();
 
-    function updateCurrentPage(): void {
-        const totalCycleDuration = screenOrder.reduce((sum: Number, id: String) => sum + screens[id].durationSeconds, 0);
+    let currentScreen = $state<string>();
+    const screen = $derived(currentScreen ? config.screens[currentScreen] : undefined);
 
-        let lastSlot = 0;
-        const timeSlots = screenOrder.map((id: String) => {
-            const slot = lastSlot += screens[id].durationSeconds;
-            return {id, slot}
-        });
-        const now = Date.now();
-
-        // If "cycle" (time for screen 0 to be shown twice) is 15 seconds
-        // currentCycleTime loops from 0 to 14, if cycle is 20
-        // currentCycleTime loops from 0 to 19, and so on...
-        const currentCycleTime = Math.round((now % (totalCycleDuration * 1000)) / 1000);
-
-        for (let timeSlot of timeSlots) {
-            if (timeSlot.slot > currentCycleTime) {
-                currentScreen.set(timeSlot.id)
-                break;
-            }            
+    function updateCurrentScreen(): void {
+        const slots = config.screenOrder.map(id => ({ id, durationSeconds: config.screens[id].durationSeconds }));
+        const id = getActiveScreenId(slots);
+        if (id !== undefined && id !== currentScreen) {
+            currentScreen = id;
+            displayStatus.currentScreen = id;
         }
     }
 
-    function tick() {
-        updateCurrentPage();
-        const now = new Date();
-        const next = 1000 - now.getMilliseconds();
-
-        setTimeout(tick, next);
-    }
-    tick();
-
+    onMount(() => {
+        let timer: ReturnType<typeof setTimeout>;
+        function tick() {
+            try {
+                updateCurrentScreen();
+            } catch (error) {
+                reportError("scheduler", error);
+            } finally {
+                // Always reschedule, an error must never stop the rotation
+                timer = setTimeout(tick, msUntilNextSecond());
+            }
+        }
+        tick();
+        return () => clearTimeout(timer);
+    });
 </script>
 
 
-{#if $currentScreen}
-    <PageV1 screen={screens[$currentScreen]}/>
+{#if screen}
+    <!-- Keyed so a screen that failed to render gets a fresh boundary when the rotation moves on -->
+    {#key currentScreen}
+        <svelte:boundary onerror={(error) => reportError(`screen ${currentScreen}`, error)}>
+            <PageV1 {screen}/>
+        </svelte:boundary>
+    {/key}
 {:else}
     No active bundle
 {/if}
