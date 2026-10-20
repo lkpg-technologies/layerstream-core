@@ -2,21 +2,30 @@
     import { onMount } from "svelte";
     import PageV1 from "./PageV1.svelte";
     import type { ConfigV1 } from "./types";
-    import { getActiveScreenId, msUntilNextSecond } from "../../schedule";
+    import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "../../schedule";
     import { displayStatus, reportError } from "../../stability";
+
+    // The upcoming screen is mounted invisibly this long before it is shown,
+    // so its iframes have loaded by the time it appears
+    const PRELOAD_MS = 5_000;
 
     const { config }: { config: ConfigV1 } = $props();
 
     let currentScreen = $state<string>();
-    const screen = $derived(currentScreen ? config.screens[currentScreen] : undefined);
+    let nextScreen = $state<string>();
+    const mountedScreens = $derived(
+        [currentScreen, nextScreen].filter((id, i, ids): id is string => id !== undefined && ids.indexOf(id) === i)
+    );
 
     function updateCurrentScreen(): void {
         const slots = config.screenOrder.map(id => ({ id, durationSeconds: config.screens[id].durationSeconds }));
-        const id = getActiveScreenId(slots);
+        const now = Date.now();
+        const id = getActiveScreenId(slots, now);
         if (id !== undefined && id !== currentScreen) {
             currentScreen = id;
             displayStatus.currentScreen = id;
         }
+        nextScreen = getUpcomingScreenId(slots, PRELOAD_MS, now);
     }
 
     onMount(() => {
@@ -37,13 +46,29 @@
 </script>
 
 
-{#if screen}
-    <!-- Keyed so a screen that failed to render gets a fresh boundary when the rotation moves on -->
-    {#key currentScreen}
-        <svelte:boundary onerror={(error) => reportError(`screen ${currentScreen}`, error)}>
-            <PageV1 {screen}/>
-        </svelte:boundary>
-    {/key}
+{#if currentScreen}
+    <!-- Keyed by screen id, so the preloaded screen is shown without remounting it,
+         and each screen gets a fresh boundary when it is mounted again -->
+    {#each mountedScreens as id (id)}
+        <div class="screen-slot" class:preloading={id !== currentScreen}>
+            <svelte:boundary onerror={(error) => reportError(`screen ${id}`, error)}>
+                <PageV1 screen={config.screens[id]}/>
+            </svelte:boundary>
+        </div>
+    {/each}
 {:else}
     No active bundle
 {/if}
+
+<style>
+    .screen-slot {
+        position: absolute;
+        inset: 0;
+    }
+
+    /* visibility (not display: none) so iframes still load and lay out */
+    .screen-slot.preloading {
+        visibility: hidden;
+        pointer-events: none;
+    }
+</style>

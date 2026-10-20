@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import LegacyPage from "./Page.svelte";
     import { writable } from "svelte/store";
-    import Network from "./utils/network";
+    import { isOnline } from "../../stores/network";
     import type { LegacyConfig } from "./types/Config";
     import { getLegacyPageIndex, msUntilNextSecond } from "../../schedule";
     import { displayStatus, reportError } from "../../stability";
@@ -15,7 +15,8 @@
 
     let currentIndex = $state(getCurrentPage());
 
-    const netOnline = writable(false);
+    // Legacy semantics: wait for a confirmed connection once, then show content for good
+    let hasBeenOnline = $state(false);
     const dots = writable("");
 
     onMount(() => {
@@ -36,18 +37,13 @@
         }
         tick();
 
-        if (config.networkRequired) {
-            Network.ping((res: boolean) => {
-                netOnline.set(res)
-            });
-        }
-
         const dotsInterval = setInterval(() => {
             dots.update(d => d.length < 3 ? d + '.' : "");
         }, 1000);
 
-        const unsubscribeNet = netOnline.subscribe(online => {
-            if (online) {
+        const unsubscribeNet = isOnline.subscribe(online => {
+            if (online === true && !hasBeenOnline) {
+                hasBeenOnline = true;
                 clearInterval(dotsInterval);
             }
         });
@@ -60,19 +56,19 @@
     });
 </script>
 
-{#each config.pages as page, i}
-    {#if (config.networkRequired && $netOnline) || !config.networkRequired}
+{#if config.networkRequired && !hasBeenOnline}
+    <div class="page active no-network-page">
+        <h1>Waiting for network{ $dots }</h1>
+    </div>
+{:else}
+    {#each config.pages as page, i}
         <div class="page {i === currentIndex ? 'active' : ''}">
             <svelte:boundary onerror={(error) => reportError(`page ${i}`, error)}>
-                <LegacyPage page={ page }></LegacyPage>
+                <LegacyPage page={ page } active={i === currentIndex}></LegacyPage>
             </svelte:boundary>
         </div>
-    {:else}
-        <div class="page active no-network-page">
-            <h1>Waiting for network{ $dots }</h1>
-        </div>
-    {/if}
-{/each}
+    {/each}
+{/if}
 
 <style>
     .page {

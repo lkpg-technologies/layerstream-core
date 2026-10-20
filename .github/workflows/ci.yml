@@ -29,6 +29,9 @@ jobs:
       - name: Type check
         run: npm run check
 
+      - name: Test
+        run: npm test
+
       - name: Build
         env:
           VITE_MACHINE_CLIENT_API: http://localhost:8080

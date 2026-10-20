@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { isOnline  } from "../../stores/network.svelte";
+    import { isOnline } from "../../stores/network";
     import { reportError } from "../../stability";
+    import RefreshingIframe from "../../RefreshingIframe.svelte";
     import type { ScreenV1, WidgetV1 } from "./types";
 
     const { screen }: { screen: ScreenV1 } = $props();
@@ -10,7 +11,7 @@
         return `position: absolute; width: ${size.w}%; height: ${size.h}%; left: ${position.x}%; top: ${position.y}%;`;
     }
 </script>
-<div id="screen">
+<div class="screen">
     {#each screen.widgetOrder as widgetId (widgetId)}
         {@const widget = screen.widgets[widgetId]}
         <!-- A broken widget renders nothing instead of taking down the screen -->
@@ -18,13 +19,14 @@
             {#if widget.type === "color"}
                 <div style="{boxStyle(widget)} background: {widget.settings.color?.value};"></div>
             {:else if widget.type === "webpage"}
-                {#if !widget.settings.network?.value || $isOnline}
-                    <iframe
-                        src={widget.settings.webpage?.value}
-                        frameborder="0"
-                        title={widget.settings.webpage?.value}
+                <!-- Until the first check settles ($isOnline undefined) assume online, avoids a flash on boot -->
+                {#if !widget.settings.network?.value || $isOnline !== false}
+                    <RefreshingIframe
+                        src={widget.settings.webpage?.value ?? ""}
+                        title={widget.settings.webpage?.value ?? "webpage"}
                         style={boxStyle(widget)}
-                    ></iframe>
+                        refreshSeconds={widget.settings.refreshSeconds?.value}
+                    />
                 {:else}
                     <div
                         style="
@@ -52,7 +54,7 @@
     * {
         box-sizing: border-box;
     }
-    #screen {
+    .screen {
         position: absolute;
         height: 100%;
         width: 100%;

@@ -55,6 +55,9 @@ jobs:
       - name: Type check
         run: npm run check
 
+      - name: Test
+        run: npm test
+
       - name: Build
         env:
           VITE_CORE_VERSION: ${{ steps.version.outputs.version }}

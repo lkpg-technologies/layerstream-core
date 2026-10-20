@@ -1,25 +1,24 @@
 <script lang="ts">
     import type { Content } from "./types/Content";
     import { resolvePath } from "../../utils";
+    import RefreshingIframe from "../../RefreshingIframe.svelte";
+    import VideoPlayer from "./VideoPlayer.svelte";
 
-    const props: { content: Content} = $props();
+    const props: { content: Content, active?: boolean } = $props();
 
 </script>
 
 <div class="content-tile" style='grid-area: {props.content.id};'>
     {#if props.content.type == "url"}
 
-        <iframe src="{resolvePath(props.content.src)}" frameborder="0" title="url"></iframe>
+        <RefreshingIframe src={resolvePath(props.content.src)} title="url" refreshSeconds={props.content.refreshSeconds} />
 
     {:else if props.content.type == "image"}
 
-        <img src="{resolvePath(props.content.src)}" alt=""> 
-        
+        <img src="{resolvePath(props.content.src)}" alt="">
+
     {:else if props.content.type == "video"}
-        <video autoplay loop muted>
-            <source src="{resolvePath(props.content.src)}">
-            <track kind="captions">
-        </video>
+        <VideoPlayer src={resolvePath(props.content.src)} active={props.active ?? true} />
     {:else if props.content.type == "color"}
         <div style="background-color: {props.content.src}"></div>
     {/if}
@@ -32,7 +31,8 @@
         object-fit: cover;
     }
 
-    .content-tile > * {
+    /* :global so it also reaches elements rendered by child components (iframe, video) */
+    .content-tile > :global(*) {
         all: unset;
         max-width: 100%;
         max-height: 100%;

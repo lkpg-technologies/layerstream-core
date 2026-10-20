@@ -3,7 +3,7 @@
     import type { Content } from "./types/Content";
     import type { PageType } from "./types/PageType";
 
-    const { page }: { page: PageType } = $props();
+    const { page, active = true }: { page: PageType, active?: boolean } = $props();
     const fullscreenContent = $derived(Array.isArray(page.layout.content) ? page.layout.content[0] : page.layout.content);
 </script>
 <div class="page"
@@ -20,13 +20,13 @@
             
         `}>
             {#each (page.layout.content as Content[]) as content}
-                <ContentTile content={content}/>
+                <ContentTile content={content} {active}/>
             {/each}
         </div>
     {:else if page.type == "fullscreen"}
         <div class="fullscreen">
             <!-- Add a type for "kiosk" mode (skipping cors and iframe blocks) -->
-            <ContentTile content={fullscreenContent}/>
+            <ContentTile content={fullscreenContent} {active}/>
         </div>
     {/if}
 </div>

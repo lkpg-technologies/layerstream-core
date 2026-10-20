@@ -3,6 +3,7 @@
     import { loadConfig, config } from "./lib/stores/config";
     import { watchBundleHash } from "./lib/bundleWatcher";
     import { startHeartbeat } from "./lib/heartbeat";
+    import { scheduleDailyReload } from "./lib/dailyReload";
     import { installGlobalErrorHandlers, reportError, scheduleRecoveryReload } from "./lib/stability";
     import LegacyCore from "./lib/versions/legacy/LegacyCore.svelte";
     import CoreV1 from "./lib/versions/1/CoreV1.svelte";
@@ -13,6 +14,7 @@
             startHeartbeat(),
             loadConfig(),
             watchBundleHash(),
+            scheduleDailyReload(),
         ];
         return () => cleanups.forEach(cleanup => cleanup());
     });

@@ -12,6 +12,8 @@ export interface WidgetV1 {
         color?: Setting<string>,
         webpage?: Setting<string>,
         network?: Setting<boolean>,
+        // Remount a "webpage" widget this often, recovers pages that failed to load
+        refreshSeconds?: Setting<number>,
         [key: string]: Setting<unknown> | undefined
     }
 }
