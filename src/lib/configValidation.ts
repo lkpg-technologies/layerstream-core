@@ -1,8 +1,7 @@
 // Normalizes config.json so components can trust its shape. Invalid screens,
 // widgets and pages are dropped (with a warning) instead of crashing rendering.
+import { reportError } from "./stability";
 import type { Config } from "./types/Config";
-import type { LegacyConfig } from "./versions/legacy/types/Config";
-import type { PageType } from "./versions/legacy/types/PageType";
 import type { ConfigV1, ScreenV1, WidgetV1 } from "./versions/1/types";
 
 type Obj = Record<string, any>;
@@ -68,34 +67,14 @@ function normalizeV1(raw: Obj): ConfigV1 {
     return { ...raw, version: 1, screens, screenOrder };
 }
 
-function isValidLegacyPage(page: unknown): page is PageType {
-    if (!isObject(page) || !isObject(page.layout) || !Number.isFinite(Number(page.duration))) return false;
-    const { layout } = page;
-    if (page.type === "grid") {
-        return Array.isArray(layout.template)
-            && layout.template.length > 0
-            && layout.template.every(Array.isArray)
-            && Array.isArray(layout.content);
-    }
-    if (page.type === "fullscreen") {
-        return isObject(layout.content) || (Array.isArray(layout.content) && layout.content.length > 0);
-    }
-    return true;
-}
-
-function normalizeLegacy(raw: Obj): LegacyConfig {
-    const pages = (Array.isArray(raw.pages) ? raw.pages : [])
-        .filter((page: unknown, i: number) => {
-            const valid = isValidLegacyPage(page);
-            if (!valid) console.warn(`Config: dropping page ${i}, invalid shape`, page);
-            return valid;
-        })
-        .map((page: PageType) => ({ ...page, duration: Number(page.duration) }));
-
-    return { ...raw, pages };
-}
-
 export function normalizeConfig(raw: unknown): Config {
     if (!isObject(raw)) throw new Error("config.json is not a JSON object");
-    return Number(raw.version) === 1 ? normalizeV1(raw) : normalizeLegacy(raw);
+
+    switch (Number(raw.version)) {
+        case 1:
+            return normalizeV1(raw);
+        default:
+            reportError("Config", `Version ${raw.version} is not valid, trying fallback to v1`)
+            return normalizeV1(raw);
+    }
 }

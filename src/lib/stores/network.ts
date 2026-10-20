@@ -6,41 +6,54 @@ const CHECK_TIMEOUT_MS = 4_000;
 // A single failed ping is usually a blip, not an outage
 const FAILURES_BEFORE_OFFLINE = 3;
 
-/**
- * `undefined` until the first check settles. Treat that as "probably online"
- * when deciding whether to show content, and as "not yet online" when waiting
- * for a confirmed connection. Checks only run while something is subscribed.
- */
+// `undefined` until a check succeeds, three checks fail, or the browser reports offline.
 export const isOnline = readable<boolean | undefined>(undefined, set => {
     let failures = 0;
-    let stopped = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let controller: AbortController | undefined;
 
-    async function check() {
+    function cancelCheck() {
         clearTimeout(timer);
-        controller?.abort();
-        const current = controller = new AbortController();
+        const previous = controller;
+        controller = undefined;
+        previous?.abort();
+    }
+
+    function scheduleCheck() {
+        clearTimeout(timer);
+        timer = setTimeout(check, CHECK_INTERVAL_MS);
+    }
+
+    async function check() {
+        cancelCheck();
+        const current = new AbortController();
+        controller = current;
         const timeout = setTimeout(() => current.abort(), CHECK_TIMEOUT_MS);
         try {
             await fetch(PING_URL, { mode: "no-cors", cache: "no-store", signal: current.signal });
+            if (current !== controller) return;
             failures = 0;
             set(true);
         } catch {
-            // Aborted by a newer check, which owns the state now
+            // Timeouts count as failures; cancelled or superseded checks do not.
             if (current !== controller) return;
             failures++;
             if (failures >= FAILURES_BEFORE_OFFLINE) set(false);
         } finally {
             clearTimeout(timeout);
-            if (!stopped && current === controller) timer = setTimeout(check, CHECK_INTERVAL_MS);
+            if (current === controller) {
+                cancelCheck();
+                scheduleCheck();
+            }
         }
     }
 
     // The browser knows for certain when the link is down, react immediately
     const onOffline = () => {
+        cancelCheck();
         failures = FAILURES_BEFORE_OFFLINE;
         set(false);
+        scheduleCheck();
     };
     const onOnline = () => void check();
     window.addEventListener("offline", onOffline);
@@ -50,9 +63,7 @@ export const isOnline = readable<boolean | undefined>(undefined, set => {
     void check();
 
     return () => {
-        stopped = true;
-        clearTimeout(timer);
-        controller?.abort();
+        cancelCheck();
         window.removeEventListener("offline", onOffline);
         window.removeEventListener("online", onOnline);
     };

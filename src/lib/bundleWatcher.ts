@@ -18,15 +18,18 @@ export function watchBundleHash(): () => void {
     let controller: AbortController | undefined;
 
     async function poll() {
-        controller = new AbortController();
-        const timeout = setTimeout(() => controller?.abort(), REQUEST_TIMEOUT_MS);
+        if (stopped) return;
+        const request = new AbortController();
+        controller = request;
+        const timeout = setTimeout(() => request.abort(), REQUEST_TIMEOUT_MS);
         try {
             const res = await fetch(`${import.meta.env.VITE_MACHINE_CLIENT_API}/v1/bundles/current/hash`, {
                 cache: "no-store",
-                signal: controller.signal,
+                signal: request.signal,
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const hash = (await res.json())?.bundle_hash;
+            if (stopped) return;
             // Only a well-formed hash may trigger a reload, never an error body
             if (typeof hash !== "string" || hash === "") throw new Error("Response has no bundle_hash");
 

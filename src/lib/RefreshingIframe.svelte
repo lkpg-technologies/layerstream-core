@@ -19,7 +19,11 @@
 
     onMount(() => {
         const seconds = Number(refreshSeconds);
-        const refreshTimer = seconds > 0 ? setInterval(() => generation++, seconds * 1000) : undefined;
+
+        // returns if refreshSeconds <= 0, undefined or NaN
+        if (!refreshSeconds || Number.isNaN(seconds) || seconds <= 0) return;
+
+        const refreshTimer = setInterval(() => generation++, seconds * 1000);
 
         let wasOffline = false;
         const unsubscribe = isOnline.subscribe(online => {
@@ -35,5 +39,5 @@
 </script>
 
 {#key generation}
-    <iframe {src} {title} {style} frameborder="0" sandbox={IFRAME_SANDBOX}></iframe>
+    <iframe {src} {title} {style} frameborder="0" sandbox={IFRAME_SANDBOX} scrolling="no"></iframe>
 {/key}

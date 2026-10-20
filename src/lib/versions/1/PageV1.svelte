@@ -19,8 +19,7 @@
             {#if widget.type === "color"}
                 <div style="{boxStyle(widget)} background: {widget.settings.color?.value};"></div>
             {:else if widget.type === "webpage"}
-                <!-- Until the first check settles ($isOnline undefined) assume online, avoids a flash on boot -->
-                {#if !widget.settings.network?.value || $isOnline !== false}
+                {#if !widget.settings.network?.value || $isOnline}
                     <RefreshingIframe
                         src={widget.settings.webpage?.value ?? ""}
                         title={widget.settings.webpage?.value ?? "webpage"}
@@ -40,7 +39,7 @@
                     >
                         <h1
                             style="color: white; font-family: monospace; text-align: center;"
-                        >No network connection.
+                        >{$isOnline === false ? "No network connection." : "Checking network connection…"}
                         </h1>
                     </div>
                 {/if}

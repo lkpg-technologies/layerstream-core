@@ -32,22 +32,3 @@ export function getUpcomingScreenId(slots: Slot[], withinMs: number, now = Date.
     if (!timing || timing.msRemaining > withinMs) return undefined;
     return slots[(timing.index + 1) % slots.length].id;
 }
-
-export function getLegacyPageIndex(durations: number[], now = Date.now()): number | undefined {
-    if (durations.length === 0) return undefined;
-
-    // A non-positive duration on the first page pins it permanently
-    if (durations[0] <= 0) return 0;
-
-    const durationsMs = durations.map(d => Math.max(0, d) * 1000);
-    const cycleMs = durationsMs.reduce((sum, d) => sum + d, 0);
-    if (!(cycleMs > 0)) return 0;
-
-    const position = now % cycleMs;
-    let cursor = 0;
-    for (let i = 0; i < durationsMs.length; i++) {
-        cursor += durationsMs[i];
-        if (position < cursor) return i;
-    }
-    return undefined;
-}

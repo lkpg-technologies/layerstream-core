@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { normalizeConfig } from "./configValidation";
 import type { ConfigV1 } from "./versions/1/types";
-import type { LegacyConfig } from "./versions/legacy/types/Config";
 
 const webpageWidget = {
     type: "webpage",
@@ -21,6 +20,26 @@ describe("normalizeConfig", () => {
     });
 
     describe("v1", () => {
+        it("drops infinite durations and deduplicates widget keys while preserving repeated screens", () => {
+            const config = normalizeConfig({
+                version: 1,
+                screenOrder: ["valid", "valid", "invalid"],
+                screens: {
+                    valid: { durationSeconds: 10, widgets: { w: webpageWidget }, widgetOrder: ["w", "w"] },
+                    invalid: { durationSeconds: "Infinity" },
+                },
+            }) as ConfigV1;
+            expect(config.screenOrder).toEqual(["valid", "valid"]);
+            expect(config.screens.valid.widgetOrder).toEqual(["w"]);
+            expect(config.screens.invalid).toBeUndefined();
+        });
+
+        it("preserves IDs that match object prototype properties", () => {
+            const config = normalizeConfig(JSON.parse('{"version":1,"screenOrder":["__proto__"],"screens":{"__proto__":{"durationSeconds":10}}}')) as ConfigV1;
+            expect(config.screenOrder).toEqual(["__proto__"]);
+            expect(Object.hasOwn(config.screens, "__proto__")).toBe(true);
+        });
+
         it("accepts version as a string", () => {
             expect(normalizeConfig({ version: "1" }).version).toBe(1);
         });
@@ -66,39 +85,6 @@ describe("normalizeConfig", () => {
             const config = normalizeConfig({ version: 1 }) as ConfigV1;
             expect(config.screenOrder).toEqual([]);
             expect(config.screens).toEqual({});
-        });
-    });
-
-    describe("legacy", () => {
-        it("keeps the original example config intact", () => {
-            const page = {
-                bgColor: "white",
-                type: "fullscreen",
-                duration: -1,
-                layout: { content: { type: "url", src: "https://example.com", id: "url1" } },
-            };
-            const config = normalizeConfig({ networkRequired: true, pages: [page] }) as LegacyConfig;
-
-            expect(config.networkRequired).toBe(true);
-            expect(config.pages).toEqual([page]);
-        });
-
-        it("drops pages that would crash rendering", () => {
-            const config = normalizeConfig({
-                pages: [
-                    { type: "grid", duration: 5, layout: { template: [] } },
-                    { type: "grid", duration: 5, layout: { template: [["a"]], content: [] } },
-                    { type: "fullscreen", duration: "abc", layout: { content: {} } },
-                    { type: "fullscreen", duration: "5", layout: {} },
-                ],
-            }) as LegacyConfig;
-
-            expect(config.pages).toHaveLength(1);
-            expect(config.pages[0].type).toBe("grid");
-        });
-
-        it("treats a missing pages array as empty", () => {
-            expect((normalizeConfig({}) as LegacyConfig).pages).toEqual([]);
         });
     });
 });

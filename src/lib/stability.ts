@@ -2,7 +2,7 @@
 
 export interface DisplayStatus {
     configLoaded: boolean;
-    configVersion: 1 | "legacy" | null;
+    configVersion: 1 | null;
     currentScreen: string | null;
     lastError: { source: string; message: string; at: string } | null;
     startedAt: number;
@@ -46,7 +46,8 @@ const HEALTHY_AFTER_MS = 10 * 60_000;
 
 function readRecoveryAttempts(): number {
     try {
-        return Number(sessionStorage.getItem(RECOVERY_KEY)) || 0;
+        const attempts = Number(sessionStorage.getItem(RECOVERY_KEY));
+        return Number.isSafeInteger(attempts) ? attempts : 0;
     } catch {
         return 0;
     }
@@ -96,12 +97,16 @@ export function installGlobalErrorHandlers(): () => void {
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onRejection);
 
-    // Running long enough without a recovery reload resets the backoff
-    const healthyTimer = setTimeout(() => writeRecoveryAttempts(0), HEALTHY_AFTER_MS);
+    // Waiting for a recovery reload does not count as healthy uptime.
+    const healthyTimer = setTimeout(() => {
+        if (recoveryTimer === undefined) writeRecoveryAttempts(0);
+    }, HEALTHY_AFTER_MS);
 
     return () => {
         window.removeEventListener("error", onError);
         window.removeEventListener("unhandledrejection", onRejection);
         clearTimeout(healthyTimer);
+        clearTimeout(recoveryTimer);
+        recoveryTimer = undefined;
     };
 }

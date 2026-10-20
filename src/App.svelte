@@ -5,7 +5,6 @@
     import { startHeartbeat } from "./lib/heartbeat";
     import { scheduleDailyReload } from "./lib/dailyReload";
     import { installGlobalErrorHandlers, reportError, scheduleRecoveryReload } from "./lib/stability";
-    import LegacyCore from "./lib/versions/legacy/LegacyCore.svelte";
     import CoreV1 from "./lib/versions/1/CoreV1.svelte";
 
     onMount(() => {
@@ -32,8 +31,7 @@
         <!-- Core V1 -->
         <CoreV1 config={$config} />
     {:else}
-        <!-- Legacy Core -->
-        <LegacyCore config={$config} />
+        <h1 class="status-screen">Version {$config.version} not supported</h1>
     {/if}
 
     {#snippet failed()}

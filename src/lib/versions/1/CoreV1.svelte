@@ -7,6 +7,8 @@
 
     // The upcoming screen is mounted invisibly this long before it is shown,
     // so its iframes have loaded by the time it appears
+    //
+    // Keeping this for now, TODO: Check so that video still starts on page-change and not 5 seconds before (when video is added) - Ludvig
     const PRELOAD_MS = 5_000;
 
     const { config }: { config: ConfigV1 } = $props();
