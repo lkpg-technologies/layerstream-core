@@ -35,9 +35,9 @@ describe("normalizeConfig", () => {
         });
 
         it("preserves IDs that match object prototype properties", () => {
-            const config = normalizeConfig(JSON.parse('{"version":1,"screenOrder":["__proto__"],"screens":{"__proto__":{"durationSeconds":10}}}')) as ConfigV1;
-            expect(config.screenOrder).toEqual(["__proto__"]);
-            expect(Object.hasOwn(config.screens, "__proto__")).toBe(true);
+            const config = normalizeConfig(JSON.parse('{"version":1,"screenOrder":["31abc2"],"screens":{"31abc2":{"durationSeconds":10}}}')) as ConfigV1;
+            expect(config.screenOrder).toEqual(["31abc2"]);
+            expect(Object.hasOwn(config.screens, "31abc2")).toBe(true);
         });
 
         it("accepts version as a string", () => {

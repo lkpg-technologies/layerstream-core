@@ -39,7 +39,7 @@ function normalizeV1(raw: Obj): ConfigV1 {
             continue;
         }
         const durationSeconds = Number(screen.durationSeconds);
-        if (!(durationSeconds > 0)) {
+        if (!Number.isFinite(durationSeconds) || !(durationSeconds > 0)) {
             console.warn(`Config: dropping screen "${screenId}", invalid durationSeconds`, screen.durationSeconds);
             continue;
         }
@@ -51,8 +51,8 @@ function normalizeV1(raw: Obj): ConfigV1 {
             else console.warn(`Config: dropping widget "${widgetId}" on screen "${screenId}", invalid shape`, widget);
         }
 
-        const widgetOrder = (Array.isArray(screen.widgetOrder) ? screen.widgetOrder : [])
-            .filter((id: unknown): id is string => typeof id === "string" && Object.hasOwn(widgets, id));
+        const widgetOrder = [...new Set<string>((Array.isArray(screen.widgetOrder) ? screen.widgetOrder : [])
+            .filter((id: unknown): id is string => typeof id === "string" && Object.hasOwn(widgets, id)))];
 
         screens[screenId] = { ...screen, durationSeconds, widgets, widgetOrder };
     }
