@@ -3,7 +3,7 @@
     import PageV1 from "./PageV1.svelte";
     import type { ConfigV1 } from "./types";
     import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "../../schedule";
-    import { displayStatus, reportError } from "../../stability";
+    import { reportError } from "../../stability";
 
     // The upcoming screen is mounted invisibly this long before it is shown,
     // so its iframes have loaded by the time it appears
@@ -25,7 +25,6 @@
         const id = getActiveScreenId(slots, now);
         if (id !== undefined && id !== currentScreen) {
             currentScreen = id;
-            displayStatus.currentScreen = id;
         }
         nextScreen = getUpcomingScreenId(slots, PRELOAD_MS, now);
     }
