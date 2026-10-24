@@ -3,7 +3,7 @@ import { render } from "svelte/server";
 import { writable } from "svelte/store";
 import PageV1 from "../versions/1/PageV1.svelte";
 import WebpageWidget from "../versions/1/widgets/WebpageWidget.svelte";
-import type { WidgetV1 } from "../versions/1/types";
+import type { WebpageWidgetV1, WidgetV1 } from "../versions/1/types";
 
 vi.mock("../stores/network", () => ({
     isOnline: writable<boolean | undefined>(undefined),
@@ -12,7 +12,7 @@ vi.mock("../stores/network", () => ({
 import { isOnline } from "../stores/network";
 const network = isOnline as ReturnType<typeof writable<boolean | undefined>>;
 
-const widget: WidgetV1 = {
+const widget: WebpageWidgetV1 = {
     type: "webpage",
     properties: { size: { w: 40, h: 30 }, position: { x: 15, y: 25 } },
     settings: { webpage: { value: "https://example.com" } },

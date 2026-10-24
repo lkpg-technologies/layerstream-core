@@ -2,11 +2,11 @@
     import { onMount } from "svelte";
     import { loadConfig, config } from "./lib/stores/config";
     import { watchBundleHash } from "./lib/util/bundleWatcher";
-    import { startHeartbeat } from "./lib/heartbeat";
-    import { scheduleDailyReload } from "./lib/dailyReload";
-    import { installGlobalErrorHandlers, scheduleRecoveryReload } from "./lib/stability";
+    import { startHeartbeat } from "./lib/util/heartbeat";
+    import { scheduleDailyReload } from "./lib/util/dailyReload";
+    import { installGlobalErrorHandlers, scheduleRecoveryReload } from "./lib/util/stability";
     import CoreV1 from "./lib/versions/1/CoreV1.svelte";
-    import { logError } from "./lib/utils";
+    import { logError } from "./lib/util/utils";
 
     onMount(() => {
         const cleanups = [

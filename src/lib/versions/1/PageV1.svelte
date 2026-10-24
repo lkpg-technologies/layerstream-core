@@ -2,7 +2,7 @@
     import ColorWidget from "./widgets/ColorWidget.svelte";
     import WebpageWidget from "./widgets/WebpageWidget.svelte";
     import type { ScreenV1 } from "./types";
-    import { logError } from "../../utils";
+    import { logError } from "../../util/utils";
 
     const { screen }: { screen: ScreenV1 } = $props();
 </script>

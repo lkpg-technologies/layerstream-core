@@ -2,8 +2,8 @@
     import { onMount } from "svelte";
     import PageV1 from "./PageV1.svelte";
     import type { ConfigV1 } from "./types";
-    import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "../../schedule";
-    import { logError } from "../../utils";
+    import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "../../util/schedule";
+    import { logError } from "../../util/utils";
 
     // The upcoming screen is mounted invisibly this long before it is shown,
     // so its iframes have loaded by the time it appears

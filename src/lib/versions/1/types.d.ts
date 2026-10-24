@@ -7,8 +7,8 @@ export interface ColorSettingV1 {
 }
 
 export interface WebpageSettingV1 {
-    webpage: SettingV1<string>,
-    network: SettingV1<boolean>,
+    webpage?: SettingV1<string>,
+    network?: SettingV1<boolean>,
 }
 
 export type WidgetSettingV1 = ColorSettingV1 | WebpageSettingV1
