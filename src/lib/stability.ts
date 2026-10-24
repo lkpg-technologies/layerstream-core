@@ -1,34 +1,7 @@
-// Error reporting, recovery reloads and the status reported in the heartbeat
-
-export interface DisplayStatus {
-    configLoaded: boolean;
-    configVersion: 1 | null;
-    currentScreen: string | null;
-    lastError: { source: string; message: string; at: string } | null;
-    startedAt: number;
-}
-
-export const displayStatus: DisplayStatus = {
-    configLoaded: false,
-    configVersion: null,
-    currentScreen: null,
-    lastError: null,
-    startedAt: Date.now(),
-};
-
-export function getStatusSnapshot() {
-    return {
-        config_loaded: displayStatus.configLoaded,
-        config_version: displayStatus.configVersion,
-        current_screen: displayStatus.currentScreen,
-        last_error: displayStatus.lastError,
-        uptime_seconds: Math.round((Date.now() - displayStatus.startedAt) / 1000),
-    };
-}
+// Error reporting and recovery reloads 
 
 export function reportError(source: string, error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    displayStatus.lastError = { source, message, at: new Date().toISOString() };
     console.error(`[${source}]`, error);
 }
 

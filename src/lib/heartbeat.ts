@@ -1,5 +1,3 @@
-import { getStatusSnapshot } from "./stability";
-
 const HEARTBEAT_INTERVAL_MS = 10_000;
 const HEARTBEAT_TIMEOUT_MS = 5_000;
 
@@ -16,8 +14,7 @@ export function startHeartbeat(): () => void {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    version: import.meta.env.VITE_CORE_VERSION?.trim() || "dev",
-                    status: getStatusSnapshot(),
+                    version: import.meta.env.VITE_CORE_VERSION?.trim() || "dev"
                 }),
                 signal: controller.signal,
             });
