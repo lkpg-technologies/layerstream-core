@@ -3,7 +3,7 @@ import { writable } from "svelte/store";
 import type { Config } from "../types/Config";
 import { resolvePath } from "../utils";
 import { normalizeConfig } from "../configValidation";
-import { displayStatus, reportError } from "../stability";
+import { reportError } from "../stability";
 
 const _config = writable<Config | undefined>(undefined);
 export const config = { subscribe: _config.subscribe };
@@ -28,9 +28,6 @@ export function loadConfig(): () => void {
             const loaded = normalizeConfig(await res.json());
             if (stopped) return;
 
-            displayStatus.configLoaded = true;
-            displayStatus.configVersion = loaded.version;
-            console.info(`Version: ${displayStatus.configVersion}`);
             _config.set(loaded);
         } catch (err) {
             if (stopped) return;
