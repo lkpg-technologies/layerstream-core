@@ -25,8 +25,8 @@ describe("normalizeConfig", () => {
                 version: 1,
                 screenOrder: ["valid", "valid", "invalid"],
                 screens: {
-                    valid: { durationSeconds: 10, widgets: { w: webpageWidget }, widgetOrder: ["w", "w"] },
-                    invalid: { durationSeconds: "Infinity" },
+                    valid: { id: "valid", durationSeconds: 10, widgets: { w: webpageWidget }, widgetOrder: ["w", "w"] },
+                    invalid: { id: "invalid", durationSeconds: "Infinity" },
                 },
             }) as ConfigV1;
             expect(config.screenOrder).toEqual(["valid", "valid"]);
@@ -35,9 +35,32 @@ describe("normalizeConfig", () => {
         });
 
         it("preserves IDs that match object prototype properties", () => {
-            const config = normalizeConfig(JSON.parse('{"version":1,"screenOrder":["31abc2"],"screens":{"31abc2":{"durationSeconds":10}}}')) as ConfigV1;
+            const config = normalizeConfig(JSON.parse('{"version":1,"screenOrder":["31abc2"],"screens":{"31abc2":{"id":"31abc2","durationSeconds":10}}}')) as ConfigV1;
             expect(config.screenOrder).toEqual(["31abc2"]);
             expect(Object.hasOwn(config.screens, "31abc2")).toBe(true);
+        });
+
+        it("drops screens with missing, non-string, or mismatched IDs", () => {
+            const config = normalizeConfig({
+                version: 1,
+                screenOrder: ["valid", "missing", "numeric", "mismatched"],
+                screens: {
+                    valid: { id: "valid", durationSeconds: 10 },
+                    missing: { durationSeconds: 10 },
+                    numeric: { id: 42, durationSeconds: 10 },
+                    mismatched: { id: "valid", durationSeconds: 10 },
+                },
+            }) as ConfigV1;
+
+            expect(config.screenOrder).toEqual(["valid"]);
+            expect(Object.keys(config.screens)).toEqual(["valid"]);
+            expect(config.screens.valid.id).toBe("valid");
+            for (const [id, value] of [["missing", undefined], ["numeric", 42], ["mismatched", "valid"]]) {
+                expect(console.warn).toHaveBeenCalledWith(
+                    `Config: dropping screen "${id}", id must match its record key`,
+                    value,
+                );
+            }
         });
 
         it("accepts version as a string", () => {
@@ -50,11 +73,12 @@ describe("normalizeConfig", () => {
                 screenOrder: ["s1", "missing", "zero", 42],
                 screens: {
                     s1: {
+                        id: "s1",
                         durationSeconds: "10",
                         widgetOrder: ["w1", "broken", "unknown"],
                         widgets: { w1: webpageWidget, broken: { type: "color", settings: {} } },
                     },
-                    zero: { durationSeconds: 0, widgets: {} },
+                    zero: { id: "zero", durationSeconds: 0, widgets: {} },
                     notAnObject: "x",
                 },
             }) as ConfigV1;
@@ -71,6 +95,7 @@ describe("normalizeConfig", () => {
                 screenOrder: ["s1"],
                 screens: {
                     s1: {
+                        id: "s1",
                         durationSeconds: 5,
                         widgetOrder: ["w1"],
                         widgets: { w1: { ...webpageWidget, properties: { size: { w: "100", h: 100 }, position: { x: 0, y: 0 } } } },

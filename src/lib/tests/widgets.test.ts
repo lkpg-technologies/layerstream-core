@@ -65,6 +65,8 @@ it("preserves percentage geometry, widget order, and unsupported-type behavior",
     const { body } = render(PageV1, {
         props: {
             screen: {
+                id: "screen",
+                name: "Screen",
                 durationSeconds: 10,
                 widgetOrder: ["color", "unknown", "web"],
                 widgets: {

@@ -30,12 +30,16 @@ function isValidWidget(widget: unknown): widget is WidgetV1 {
 }
 
 function normalizeV1(raw: Obj): ConfigV1 {
-    const rawScreens = isObject(raw.screens) ? raw.screens : {};
+    const rawScreens: Record<string, ScreenV1> = isObject(raw.screens) ? raw.screens : {};
     const screens: Record<string, ScreenV1> = {};
 
     for (const [screenId, screen] of Object.entries(rawScreens)) {
         if (!isObject(screen)) {
             console.warn(`Config: dropping screen "${screenId}", not an object`);
+            continue;
+        }
+        if (typeof screen.id !== "string" || screen.id !== screenId) {
+            console.warn(`Config: dropping screen "${screenId}", id must match its record key`, screen.id);
             continue;
         }
         const durationSeconds = Number(screen.durationSeconds);

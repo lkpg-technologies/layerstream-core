@@ -20,13 +20,13 @@
     );
 
     function updateCurrentScreen(): void {
-        const slots = config.screenOrder.map(id => ({ id, durationSeconds: config.screens[id].durationSeconds }));
+        const screens = config.screenOrder.map(id => config.screens[id]);
         const now = Date.now();
-        const id = getActiveScreenId(slots, now);
+        const id = getActiveScreenId(screens, now);
         if (id !== undefined && id !== currentScreen) {
             currentScreen = id;
         }
-        nextScreen = getUpcomingScreenId(slots, PRELOAD_MS, now);
+        nextScreen = getUpcomingScreenId(screens, PRELOAD_MS, now);
     }
 
     onMount(() => {
