@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { normalizeConfig } from "./configValidation";
-import type { ConfigV1 } from "./versions/1/types";
+import { normalizeConfig } from "../configValidation";
+import type { ConfigV1 } from "../versions/1/types";
 
 const webpageWidget = {
     type: "webpage",

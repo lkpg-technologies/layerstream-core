@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "./schedule";
+import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "../schedule";
 
 describe("getActiveScreenId", () => {
     const slots = [{ id: "a", durationSeconds: 10 }, { id: "b", durationSeconds: 5 }];

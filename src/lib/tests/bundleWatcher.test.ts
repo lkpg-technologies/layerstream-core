@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { watchBundleHash } from "./bundleWatcher";
-import { hardReload } from "./stability";
+import { watchBundleHash } from "../bundleWatcher";
+import { hardReload } from "../stability";
 
 vi.mock("./stability", () => ({ hardReload: vi.fn() }));
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.clearAllMocks(); });

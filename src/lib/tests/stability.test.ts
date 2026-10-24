@@ -10,7 +10,7 @@ async function setup(attempts = "0") {
     const location = { pathname: "/", href: "" };
     vi.stubGlobal("sessionStorage", storage);
     vi.stubGlobal("window", { location, addEventListener: vi.fn(), removeEventListener: vi.fn() });
-    return { ...await import("./stability"), storage, location };
+    return { ...await import("../stability"), storage, location };
 }
 
 it("does not reset backoff while waiting for recovery", async () => {
