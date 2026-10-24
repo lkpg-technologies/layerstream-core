@@ -1,9 +1,10 @@
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { watchBundleHash } from "../bundleWatcher";
 import { hardReload } from "../stability";
 
-vi.mock("./stability", () => ({ hardReload: vi.fn() }));
-afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.clearAllMocks(); });
+vi.mock("../stability", () => ({ hardReload: vi.fn() }));
+beforeEach(() => { vi.stubEnv("VITE_POLL_TIMEOUT_SECONDS", "5"); });
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.clearAllMocks(); });
 
 it("reloads when the bundle changes", async () => {
     vi.useFakeTimers();

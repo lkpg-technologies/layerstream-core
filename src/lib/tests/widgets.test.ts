@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "svelte/server";
 import { writable } from "svelte/store";
 import PageV1 from "../versions/1/PageV1.svelte";
-import WebpageWidget from "../versions/1/WebpageWidget.svelte";
+import WebpageWidget from "../versions/1/widgets/WebpageWidget.svelte";
 import type { WidgetV1 } from "../versions/1/types";
 
 vi.mock("../stores/network", () => ({
