@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { reportError } from "../../stability";
     import ColorWidget from "./widgets/ColorWidget.svelte";
     import WebpageWidget from "./widgets/WebpageWidget.svelte";
     import type { ScreenV1 } from "./types";
+    import { logError } from "../../utils";
 
     const { screen }: { screen: ScreenV1 } = $props();
 </script>
@@ -10,7 +10,7 @@
     {#each screen.widgetOrder as widgetId (widgetId)}
         {@const widget = screen.widgets[widgetId]}
         <!-- A broken widget renders nothing instead of taking down the screen -->
-        <svelte:boundary onerror={(error) => reportError(`widget ${widgetId}`, error)}>
+        <svelte:boundary onerror={(error) => logError(`widget ${widgetId}`, error)}>
             {#if widget.type === "color"}
                 <ColorWidget {widget} />
             {:else if widget.type === "webpage"}

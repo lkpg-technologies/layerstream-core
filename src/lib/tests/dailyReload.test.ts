@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextReloadAt, parseReloadTime } from "../dailyReload";
+import { nextReloadAt, parseReloadTime } from "../util/dailyReload";
 
 describe("parseReloadTime", () => {
     it("parses HH:MM", () => {

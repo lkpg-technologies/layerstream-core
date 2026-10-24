@@ -1,4 +1,4 @@
-import { hardReload } from "./stability";
+import { hardReload } from "./utils";
 
 const DEFAULT_RELOAD_TIME = "03:00";
 const CHECK_INTERVAL_MS = 30_000;

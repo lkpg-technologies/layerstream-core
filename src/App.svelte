@@ -1,11 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { loadConfig, config } from "./lib/stores/config";
-    import { watchBundleHash } from "./lib/bundleWatcher";
+    import { watchBundleHash } from "./lib/util/bundleWatcher";
     import { startHeartbeat } from "./lib/heartbeat";
     import { scheduleDailyReload } from "./lib/dailyReload";
-    import { installGlobalErrorHandlers, reportError, scheduleRecoveryReload } from "./lib/stability";
+    import { installGlobalErrorHandlers, scheduleRecoveryReload } from "./lib/stability";
     import CoreV1 from "./lib/versions/1/CoreV1.svelte";
+    import { logError } from "./lib/utils";
 
     onMount(() => {
         const cleanups = [
@@ -19,7 +20,7 @@
     });
 
     function onRenderError(error: unknown) {
-        reportError("render", error);
+        logError("render", error);
         scheduleRecoveryReload("render error");
     }
 </script>

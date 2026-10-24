@@ -2,21 +2,36 @@ export interface SettingV1<T> {
     value: T
 }
 
-export interface WidgetV1 {
-    type: "color" | "webpage" | string,
+export interface ColorSettingV1 {
+    color: SettingV1<string>,
+}
+
+export interface WebpageSettingV1 {
+    webpage: SettingV1<string>,
+    network: SettingV1<boolean>,
+}
+
+export type WidgetSettingV1 = ColorSettingV1 | WebpageSettingV1
+
+
+interface WidgetBaseV1 {
     properties: {
         size: { w: number, h: number },
         position: { x: number, y: number }
     },
-    settings: {
-        color?: SettingV1<string>,
-        webpage?: SettingV1<string>,
-        network?: SettingV1<boolean>,
-        /** Remount a "webpage" widget this often, recovers pages that failed to load */ 
-        refreshSeconds?: SettingV1<number>,
-        [key: string]: SettingV1<unknown> | undefined
-    }
 }
+
+export interface ColorWidgetV1 extends WidgetBaseV1 {
+    type: "color",
+    settings: ColorSettingV1
+}
+
+export interface WebpageWidgetV1 extends WidgetBaseV1 {
+    type: "webpage",
+    settings: WebpageSettingV1
+}
+
+export type WidgetV1 = ColorWidgetV1 | WebpageWidgetV1
 
 export interface ScreenV1 {
     id: string,

@@ -3,7 +3,7 @@
     import PageV1 from "./PageV1.svelte";
     import type { ConfigV1 } from "./types";
     import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "../../schedule";
-    import { reportError } from "../../stability";
+    import { logError } from "../../utils";
 
     // The upcoming screen is mounted invisibly this long before it is shown,
     // so its iframes have loaded by the time it appears
@@ -35,7 +35,7 @@
             try {
                 updateCurrentScreen();
             } catch (error) {
-                reportError("scheduler", error);
+                logError("scheduler", error);
             } finally {
                 // Always reschedule, an error must never stop the rotation
                 timer = setTimeout(tick, msUntilNextSecond());
@@ -52,7 +52,7 @@
          and each screen gets a fresh boundary when it is mounted again -->
     {#each mountedScreens as id (id)}
         <div class="screen-slot" class:preloading={id !== currentScreen}>
-            <svelte:boundary onerror={(error) => reportError(`screen ${id}`, error)}>
+            <svelte:boundary onerror={(error) => logError(`screen ${id}`, error)}>
                 <PageV1 screen={config.screens[id]}/>
             </svelte:boundary>
         </div>

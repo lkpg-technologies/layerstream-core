@@ -1,9 +1,8 @@
 // src/lib/stores/config.ts
 import { writable } from "svelte/store";
 import type { Config } from "../types/Config";
-import { resolvePath } from "../utils";
-import { normalizeConfig } from "../configValidation";
-import { reportError } from "../stability";
+import { logError, resolvePath } from "../util/utils";
+import { normalizeConfig } from "../util/configValidation";
 
 const _config = writable<Config | undefined>(undefined);
 export const config = { subscribe: _config.subscribe };
@@ -31,7 +30,7 @@ export function loadConfig(): () => void {
             _config.set(loaded);
         } catch (err) {
             if (stopped) return;
-            reportError("config", err);
+            logError("config", err);
             const delay = Math.min(RETRY_BASE_MS * 2 ** retries, RETRY_MAX_MS);
             retryTimer = setTimeout(() => attempt(retries + 1), delay);
         } finally {

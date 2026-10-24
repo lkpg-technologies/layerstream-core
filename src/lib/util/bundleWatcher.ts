@@ -1,4 +1,4 @@
-import { hardReload } from "./stability";
+import { hardReload } from "./utils";
 
 const DEFAULT_POLL_SECONDS = 5;
 const REQUEST_TIMEOUT_MS = 5_000;

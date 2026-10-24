@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "../schedule";
+import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "../util/schedule";
 
 import type { ScreenV1 } from "../versions/1/types";
 

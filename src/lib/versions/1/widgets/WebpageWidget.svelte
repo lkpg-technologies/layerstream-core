@@ -2,9 +2,9 @@
     import { isOnline } from "../../../stores/network";
     import RefreshingIframe from "../../../RefreshingIframe.svelte";
     import Widget from "./Widget.svelte";
-    import type { WidgetV1 } from "../types";
+    import type { WebpageWidgetV1 } from "../types";
 
-    const { widget }: { widget: WidgetV1 } = $props();
+    const { widget }: { widget: WebpageWidgetV1 } = $props();
 </script>
 
 <Widget properties={widget.properties}>
@@ -13,7 +13,6 @@
             src={widget.settings.webpage?.value ?? ""}
             title={widget.settings.webpage?.value ?? "webpage"}
             style="position: absolute; width: 100%; height: 100%; left: 0; top: 0;"
-            refreshSeconds={widget.settings.refreshSeconds?.value}
         />
     {:else}
         <div class="fallback">

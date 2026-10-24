@@ -1,8 +1,8 @@
 <script lang="ts">
     import Widget from "./Widget.svelte";
-    import type { WidgetV1 } from "../types";
+    import type { ColorWidgetV1 } from "../types";
 
-    const { widget }: { widget: WidgetV1 } = $props();
+    const { widget }: { widget: ColorWidgetV1 } = $props();
 </script>
 
 <Widget properties={widget.properties}>

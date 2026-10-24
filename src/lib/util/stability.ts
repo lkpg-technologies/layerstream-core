@@ -1,16 +1,7 @@
-// Error reporting and recovery reloads 
-
-export function reportError(source: string, error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`[${source}]`, error);
-}
-
-export function hardReload(reason: string) {
-    console.warn(`Reloading: ${reason}`);
-    window.location.href = window.location.pathname + "?v=" + Date.now();
-}
-
 // Recovery reloads back off exponentially (tracked across reloads in sessionStorage)
+
+import { hardReload, logError } from "./utils";
+
 // so a persistent fault can't put the display in a tight reload loop
 const RECOVERY_KEY = "layerstream:recoveryReloads";
 const RECOVERY_BASE_DELAY_MS = 30_000;
@@ -56,7 +47,7 @@ export function installGlobalErrorHandlers(): () => void {
     let recentErrors: number[] = [];
 
     function record(source: string, error: unknown) {
-        reportError(source, error);
+        logError(source, error);
         const now = Date.now();
         recentErrors = recentErrors.filter(t => now - t < ERROR_WINDOW_MS);
         recentErrors.push(now);

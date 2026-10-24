@@ -72,6 +72,7 @@ it("preserves percentage geometry, widget order, and unsupported-type behavior",
                 widgets: {
                     web: widget,
                     color: { ...widget, type: "color", settings: { color: { value: "#123456" } } },
+                    // @ts-expect-error Deliberately exercise unsupported widget data at runtime.
                     unknown: { ...widget, type: "unsupported", settings: { color: { value: "#abcdef" } } },
                 },
             },

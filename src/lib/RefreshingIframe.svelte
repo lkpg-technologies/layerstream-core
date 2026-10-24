@@ -6,11 +6,10 @@
     // No allow-popups: a popup would cover the kiosk.
     const IFRAME_SANDBOX = "allow-scripts allow-same-origin allow-forms";
 
-    const { src, title, style, refreshSeconds }: {
+    const { src, title, style }: {
         src: string,
         title: string,
         style?: string,
-        refreshSeconds?: number
     } = $props();
 
     // A failed cross-origin load can't be detected from here, so recover by
@@ -18,13 +17,6 @@
     let generation = $state(0);
 
     onMount(() => {
-        const seconds = Number(refreshSeconds);
-
-        // returns if refreshSeconds <= 0, undefined or NaN
-        if (!refreshSeconds || Number.isNaN(seconds) || seconds <= 0) return;
-
-        const refreshTimer = setInterval(() => generation++, seconds * 1000);
-
         let wasOffline = false;
         const unsubscribe = isOnline.subscribe(online => {
             if (online && wasOffline) generation++;
@@ -32,7 +24,6 @@
         });
 
         return () => {
-            clearInterval(refreshTimer);
             unsubscribe();
         };
     });

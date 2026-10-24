@@ -1,4 +1,4 @@
-import type { ScreenV1 } from "./versions/1/types";
+import type { ScreenV1 } from "../versions/1/types";
 
 // Screen rotation is derived from wall-clock time, so all displays sharing a
 // config show the same screen at the same moment

@@ -1,8 +1,8 @@
 // Normalizes config.json so components can trust its shape. Invalid screens,
 // widgets and pages are dropped (with a warning) instead of crashing rendering.
-import { reportError } from "./stability";
-import type { Config } from "./types/Config";
-import type { ConfigV1, ScreenV1, WidgetV1 } from "./versions/1/types";
+import type { Config } from "../types/Config";
+import { logError } from "./utils";
+import type { ConfigV1, ScreenV1, WidgetV1 } from "../versions/1/types";
 
 type Obj = Record<string, any>;
 
@@ -78,7 +78,7 @@ export function normalizeConfig(raw: unknown): Config {
         case 1:
             return normalizeV1(raw);
         default:
-            reportError("Config", `Version ${raw.version} is not valid, trying fallback to v1`)
+            logError("Config", `Version ${raw.version} is not valid, trying fallback to v1`)
             return normalizeV1(raw);
     }
 }
