@@ -1,22 +1,8 @@
 // Normalizes config.json so components can trust its shape. Invalid screens,
 // widgets and pages are dropped (with a warning) instead of crashing rendering.
 import type { Config } from "../types/Config";
-import { logError } from "./utils";
+import { hasStringSetting, isFiniteNumber, isObject, logError, type Obj } from "./utils";
 import type { ConfigV1, ScreenV1, WidgetV1 } from "../versions/1/types";
-
-type Obj = Record<string, any>;
-
-function isObject(value: unknown): value is Obj {
-    return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isFiniteNumber(value: unknown): boolean {
-    return typeof value === "number" && Number.isFinite(value);
-}
-
-function hasStringSetting(widget: Obj, key: string): boolean {
-    return isObject(widget.settings[key]) && typeof widget.settings[key].value === "string";
-}
 
 function isValidWidget(widget: unknown): widget is WidgetV1 {
     if (!isObject(widget) || typeof widget.type !== "string") return false;
