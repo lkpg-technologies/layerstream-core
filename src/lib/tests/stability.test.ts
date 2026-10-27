@@ -13,6 +13,8 @@ async function setup(attempts = "0") {
     return { ...await import("../util/stability"), storage, location };
 }
 
+// A persistent fault can leave the display waiting for recovery when the healthy-uptime timer fires.
+// Resetting attempts during that wait would erase backoff and make repeated failures cause more frequent disruptive reloads.
 it("does not reset backoff while waiting for recovery", async () => {
     const s = await setup("5");
     const stop = s.installGlobalErrorHandlers();
@@ -24,6 +26,8 @@ it("does not reset backoff while waiting for recovery", async () => {
     stop();
 });
 
+// Error handlers may be torn down while a recovery reload is pending, then recovery may be needed again.
+// A stale timer would interrupt playback after cleanup; stale scheduling state could prevent recovery from the next failure.
 it("cancels recovery on cleanup and allows scheduling again", async () => {
     const s = await setup();
     const stop = s.installGlobalErrorHandlers();
@@ -36,6 +40,8 @@ it("cancels recovery on cleanup and allows scheduling again", async () => {
     expect(s.location.href).toContain("?v=");
 });
 
+// A display can run successfully after several earlier recovery attempts.
+// Keeping the old backoff indefinitely would make a later unrelated failure take unnecessarily long to recover from.
 it("resets backoff after healthy uptime", async () => {
     const s = await setup("3");
     const stop = s.installGlobalErrorHandlers();

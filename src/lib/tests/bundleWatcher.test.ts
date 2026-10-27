@@ -6,6 +6,8 @@ vi.mock("../util/utils", () => ({ hardReload: vi.fn() }));
 beforeEach(() => { vi.stubEnv("VITE_POLL_TIMEOUT_SECONDS", "5"); });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.clearAllMocks(); });
 
+// A running display must pick up a newly activated bundle without manual intervention.
+// Missing the change leaves stale content on screen; reloading on the initial hash would interrupt startup unnecessarily.
 it("reloads when the bundle changes", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("fetch", vi.fn()
@@ -19,6 +21,8 @@ it("reloads when the bundle changes", async () => {
     stop();
 });
 
+// A bundle response can finish after its watcher has been stopped.
+// Acting on that stale response would reload the display unexpectedly, and leftover timers could keep obsolete polling alive.
 it("ignores a changed bundle received after cleanup", async () => {
     vi.useFakeTimers();
     let resolve!: (value: unknown) => void;

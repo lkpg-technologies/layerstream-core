@@ -23,6 +23,9 @@ beforeEach(() => network.set(undefined));
 describe("webpage network behavior", () => {
     for (const required of [undefined, false, true]) {
         for (const online of [undefined, false, true]) {
+            // At startup or during an outage, connectivity may be unknown or offline, and widgets may or may not require it.
+            // Incorrect gating would hide usable content or embed unavailable pages instead of showing the correct connection message.
+            // When an iframe is rendered, its URL, title, and sandbox attributes must retain the expected markup contract.
             it(`renders with network required=${required}, online=${online}`, () => {
                 network.set(online);
                 const { body } = render(WebpageWidget, {
@@ -52,6 +55,8 @@ describe("webpage network behavior", () => {
         }
     }
 
+    // The webpage component may be rendered directly with no webpage setting.
+    // Losing its fallback attributes would change the empty-source behavior and leave the frame without its default descriptive title.
     it("keeps the empty URL and title defaults", () => {
         const { body } = render(WebpageWidget, {
             props: { widget: { ...widget, settings: {} } },
@@ -61,6 +66,8 @@ describe("webpage network behavior", () => {
     });
 });
 
+// Layouts must retain relative sizing and stacking across display sizes, even when an unsupported widget type is present.
+// Wrong geometry or order could obscure content; rendering an unknown type as a supported one could show unintended content.
 it("preserves percentage geometry, widget order, and unsupported-type behavior", () => {
     const { body } = render(PageV1, {
         props: {
