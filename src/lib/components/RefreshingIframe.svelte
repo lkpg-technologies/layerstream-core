@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { isOnline } from "./stores/network";
+    import { isOnline } from "../stores/network";
 
     // No allow-top-navigation: embedded pages must never be able to navigate the display away from the app.
     // No allow-popups: a popup would cover the kiosk.

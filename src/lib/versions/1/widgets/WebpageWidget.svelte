@@ -1,6 +1,6 @@
 <script lang="ts">
     import { isOnline } from "../../../stores/network";
-    import RefreshingIframe from "../../../RefreshingIframe.svelte";
+    import RefreshingIframe from "../../../components/RefreshingIframe.svelte";
     import Widget from "./Widget.svelte";
     import type { WebpageWidgetV1 } from "../types";
 
