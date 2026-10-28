@@ -32,6 +32,7 @@ export function networkConfig(): ConfigV1 {
 type Harness = {
   config: unknown;
   configFailures: number;
+  configPending: boolean;
   malformed: boolean;
   configRequests: number;
   hash: string;
@@ -47,7 +48,7 @@ type Harness = {
 export const test = base.extend<{ harness: Harness }>({
   harness: async ({ page, context }, use) => {
     const state: Harness = {
-      config: playbackConfig(), configFailures: 0, malformed: false, configRequests: 0,
+      config: playbackConfig(), configFailures: 0, configPending: false, malformed: false, configRequests: 0,
       hash: 'initial', hashFailure: false, hashRequests: 0,
       connectivity: 'online', probes: 0, heartbeatFailure: false,
       heartbeats: [], frames: [], unexpected: [],
@@ -62,6 +63,7 @@ export const test = base.extend<{ harness: Harness }>({
       switch (url.pathname) {
         case '/e2e-bundle/config.json':
           state.configRequests++;
+          if (state.configPending) return;
           if (state.configFailures-- > 0) return route.fulfill({ status: 503 });
           if (state.malformed) return route.fulfill({ contentType: 'application/json', body: '{broken' });
           return route.fulfill({ json: state.config });

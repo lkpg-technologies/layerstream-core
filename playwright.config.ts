@@ -26,7 +26,7 @@ export default defineConfig({
       VITE_NETWORK_CHECK_URL: 'http://127.0.0.1:4174/connectivity',
       VITE_POLL_TIMEOUT_SECONDS: '5',
       VITE_CORE_VERSION: 'e2e',
-      VITE_DAILY_RELOAD_TIME: 'off',
+      VITE_DAILY_RELOAD_TIME: '03:00',
     },
   },
 });
