@@ -1,6 +1,3 @@
-import type { PageType } from "./PageType";
+import type { ConfigV1 } from "../versions/1/types";
 
-export interface Config {
-    networkRequired?: boolean,
-    pages: PageType[]
-}
+export type Config = ConfigV1;

@@ -1,49 +1,75 @@
 <script lang="ts">
-    import { writable } from "svelte/store";
-    import { config } from "../../stores/config";
+    import { onMount } from "svelte";
     import PageV1 from "./PageV1.svelte";
+    import type { ConfigV1 } from "./types";
+    import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "../../util/schedule";
+    import { logError } from "../../util/utils";
 
-    const screens = $derived($config.screens)
-    const screenOrder = $derived($config.screenOrder)
-    const currentScreen = writable<String>("");
+    // The upcoming screen is mounted invisibly this long before it is shown,
+    // so its iframes have loaded by the time it appears
+    //
+    // Keeping this for now, TODO: Check so that video still starts on page-change and not 5 seconds before (when video is added) - Ludvig
+    const PRELOAD_MS = 5_000;
 
-    function updateCurrentPage(): void {
-        const totalCycleDuration = screenOrder.reduce((sum: Number, id: String) => sum + screens[id].durationSeconds, 0);
+    const { config }: { config: ConfigV1 } = $props();
 
-        let lastSlot = 0;
-        const timeSlots = screenOrder.map((id: String) => {
-            const slot = lastSlot += screens[id].durationSeconds;
-            return {id, slot}
-        });
+    let currentScreen = $state<string>();
+    let nextScreen = $state<string>();
+    const mountedScreens = $derived(
+        [currentScreen, nextScreen].filter((id, i, ids): id is string => id !== undefined && ids.indexOf(id) === i)
+    );
+
+    function updateCurrentScreen(): void {
+        const screens = config.screenOrder.map(id => config.screens[id]);
         const now = Date.now();
-
-        // If "cycle" (time for screen 0 to be shown twice) is 15 seconds
-        // currentCycleTime loops from 0 to 14, if cycle is 20
-        // currentCycleTime loops from 0 to 19, and so on...
-        const currentCycleTime = Math.round((now % (totalCycleDuration * 1000)) / 1000);
-
-        for (let timeSlot of timeSlots) {
-            if (timeSlot.slot > currentCycleTime) {
-                currentScreen.set(timeSlot.id)
-                break;
-            }            
+        const id = getActiveScreenId(screens, now);
+        if (id !== undefined && id !== currentScreen) {
+            currentScreen = id;
         }
+        nextScreen = getUpcomingScreenId(screens, PRELOAD_MS, now);
     }
 
-    function tick() {
-        updateCurrentPage();
-        const now = new Date();
-        const next = 1000 - now.getMilliseconds();
-
-        setTimeout(tick, next);
-    }
-    tick();
-
+    onMount(() => {
+        let timer: ReturnType<typeof setTimeout>;
+        function tick() {
+            try {
+                updateCurrentScreen();
+            } catch (error) {
+                logError("scheduler", error);
+            } finally {
+                // Always reschedule, an error must never stop the rotation
+                timer = setTimeout(tick, msUntilNextSecond());
+            }
+        }
+        tick();
+        return () => clearTimeout(timer);
+    });
 </script>
 
 
-{#if $currentScreen}
-    <PageV1 screen={screens[$currentScreen]}/>
+{#if currentScreen}
+    <!-- Keyed by screen id, so the preloaded screen is shown without remounting it,
+         and each screen gets a fresh boundary when it is mounted again -->
+    {#each mountedScreens as id (id)}
+        <div class="screen-slot" class:preloading={id !== currentScreen}>
+            <svelte:boundary onerror={(error) => logError(`screen ${id}`, error)}>
+                <PageV1 screen={config.screens[id]}/>
+            </svelte:boundary>
+        </div>
+    {/each}
 {:else}
     No active bundle
 {/if}
+
+<style>
+    .screen-slot {
+        position: absolute;
+        inset: 0;
+    }
+
+    /* visibility (not display: none) so iframes still load and lay out */
+    .screen-slot.preloading {
+        visibility: hidden;
+        pointer-events: none;
+    }
+</style>
