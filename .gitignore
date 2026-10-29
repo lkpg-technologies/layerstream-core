@@ -1,3 +1,9 @@
 node_modules
 dist
 public/current/*
+.env
+.env.*
+
+dist-e2e/
+playwright-report/
+test-results/

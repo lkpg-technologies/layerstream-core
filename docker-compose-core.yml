@@ -1,10 +1,10 @@
 services:
   frontend:
-    image: "node:25-alpine"
+    # Keep in sync with .nvmrc
+    image: "node:24-alpine"
     restart: "no"
-    ports:
-      - 5173:5173
+    # Host networking exposes Vite on 5173 directly; `ports` is ignored in this mode
     network_mode: "host"
     volumes:
       - .:/core-client
-    command: ["sh", "-c", "cd /core-client && npm install && npm run dev"]
+    command: ["sh", "-c", "cd /core-client && npm ci && npm run dev"]

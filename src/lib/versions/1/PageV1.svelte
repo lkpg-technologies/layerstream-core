@@ -1,66 +1,29 @@
 <script lang="ts">
-    import { isOnline  } from "../../stores/network.svelte";
+    import ColorWidget from "./widgets/ColorWidget.svelte";
+    import WebpageWidget from "./widgets/WebpageWidget.svelte";
+    import type { ScreenV1 } from "./types";
+    import { logError } from "../../util/utils";
 
-    const { screen } = $props();
+    const { screen }: { screen: ScreenV1 } = $props();
 </script>
-<div id="screen">
-    {#each screen.widgetOrder as widgetId}
-        {#if screen.widgets[widgetId].type === "color"}
-            <div
-                style="
-                    position: absolute;
-                    width: {screen.widgets[widgetId].properties.size.w}%;
-                    height: {screen.widgets[widgetId].properties.size.h}%;
-                    left: {screen.widgets[widgetId].properties.position.x}%;
-                    top: {screen.widgets[widgetId].properties.position.y}%;
-                    background: {screen.widgets[widgetId].settings.color.value};
-                "
-            ></div>
-        {:else if screen.widgets[widgetId].type === "webpage"}
-            {#if !screen.widgets[widgetId].settings.network?.value || $isOnline}
-                <iframe
-                    src={screen.widgets[widgetId].settings.webpage.value}
-                    frameborder="0"
-                    title={screen.widgets[widgetId].settings.webpage.value}
-                    style="
-                        position: absolute;
-                        width: {screen.widgets[widgetId].properties.size.w}%;
-                        height: {screen.widgets[widgetId].properties.size.h}%;
-                        left: {screen.widgets[widgetId].properties.position.x}%;
-                        top: {screen.widgets[widgetId].properties.position.y}%;
-                    "
-                ></iframe>
-            {:else}
-                <div
-                    style="
-                        position: absolute;
-                        width: {screen.widgets[widgetId].properties.size.w}%;
-                        height: {screen.widgets[widgetId].properties.size.h}%;
-                        left: {screen.widgets[widgetId].properties.position.x}%;
-                        top: {screen.widgets[widgetId].properties.position.y}%;
-                        background: #333333;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        border: solid black 2px;
-                    "
-                >
-                    <h1
-                        style="color: white; font-family: monospace; text-align: center;"
-                    >No network connection.
-                    </h1>
-                </div>
+<div class="screen">
+    {#each screen.widgetOrder as widgetId (widgetId)}
+        {@const widget = screen.widgets[widgetId]}
+        <!-- A broken widget renders nothing instead of taking down the screen -->
+        <svelte:boundary onerror={(error) => logError(`widget ${widgetId}`, error)}>
+            {#if widget.type === "color"}
+                <ColorWidget {widget} />
+            {:else if widget.type === "webpage"}
+                <WebpageWidget {widget} />
             {/if}
-        {/if}
+        </svelte:boundary>
     {/each}
 </div>
 
 
 <style>
-    * {
+    .screen {
         box-sizing: border-box;
-    }
-    #screen {
         position: absolute;
         height: 100%;
         width: 100%;
