@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import PageV1 from "./PageV1.svelte";
     import type { ConfigV1 } from "./types";
-    import { getActiveScreenId, getUpcomingScreenId, msUntilNextSecond } from "../../util/schedule";
+    import { getScreenTiming, getUpcomingScreenId, msUntilNextSecond } from "../../util/schedule";
     import { logError } from "../../util/utils";
 
     // The upcoming screen is mounted invisibly this long before it is shown,
@@ -21,6 +21,8 @@
     const sequential = $derived(config.screenOrder.some(id => config.screens[id].playbackMode === "video-end"));
     let position = -1;
     let startedAt = 0;
+    let wallClockSlot: number | undefined;
+    let wallClockCycle: number | undefined;
     let playbackKey = $state(0);
     const finishedVideos = new Map<string, boolean>();
 
@@ -60,9 +62,15 @@
                 ? screens[(position + 1) % screens.length].id : undefined;
             return;
         }
-        const id = getActiveScreenId(screens, now);
-        if (id !== undefined && id !== currentScreen) {
-            currentScreen = id;
+        const timing = getScreenTiming(screens, now);
+        if (timing) {
+            // A new slot must restart playback even if the same screen stays mounted.
+            if (timing.index !== wallClockSlot || timing.cycle !== wallClockCycle) {
+                playbackKey++;
+            }
+            wallClockSlot = timing.index;
+            wallClockCycle = timing.cycle;
+            currentScreen = screens[timing.index].id;
         }
         nextScreen = getUpcomingScreenId(screens, PRELOAD_MS, now);
     }

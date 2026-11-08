@@ -221,3 +221,43 @@ for (const scenario of ['loading', 'stalled', 'healthy', 'short'] as const) {
     await expect(page.locator('iframe[src="/embedded/second"]')).toBeVisible();
   });
 }
+
+for (const screenOrder of [['first'], ['first', 'first']]) {
+  test(`restarts duration-only video at each slot for ${screenOrder.length} playlist entries`, async ({ page, harness }) => {
+    const config = rotationConfig();
+    config.screenOrder = screenOrder;
+    config.screens.first.durationSeconds = 2;
+    config.screens.first.widgets = {
+      video: { type: 'video', properties: { position: { x: 0, y: 0 }, size: { w: 100, h: 100 } },
+        settings: { src: { value: 'assets/movie.webm' }, loop: { value: false } } },
+    };
+    config.screens.first.widgetOrder = ['video'];
+    harness.config = config;
+    await page.route('**/e2e-bundle/assets/movie.webm', route => route.fulfill({ contentType: 'video/webm', body: '' }));
+    await page.addInitScript(() => {
+      Object.defineProperty(HTMLMediaElement.prototype, 'currentTime', {
+        get() { return Number(this.dataset.position ?? 0); },
+        set(value) { this.dataset.position = String(value); },
+      });
+      HTMLMediaElement.prototype.play = function () {
+        this.dataset.playCalls = String(Number(this.dataset.playCalls ?? 0) + 1);
+        return Promise.resolve();
+      };
+    });
+    await page.goto('/');
+    const video = page.locator('video');
+    await expect(video).toHaveAttribute('data-play-calls', '1');
+    await expect(video).toHaveJSProperty('loop', false);
+    await video.evaluate(element => element.setAttribute('data-original', 'yes'));
+    for (let slot = 1; slot <= 3; slot++) {
+      await video.evaluate(element => { (element as HTMLVideoElement).currentTime = 1; });
+      await video.dispatchEvent('ended');
+      await page.clock.runFor(1_000);
+      await expect(video).toHaveAttribute('data-play-calls', String(slot));
+      await page.clock.runFor(1_000);
+      await expect(video).toHaveAttribute('data-play-calls', String(slot + 1));
+      await expect(video).toHaveJSProperty('currentTime', 0);
+      await expect(video).toHaveAttribute('data-original', 'yes');
+    }
+  });
+}
