@@ -58,6 +58,7 @@ export interface ScreenV1 {
     id: string,
     name: string,
     durationSeconds: number,
+    playbackMode?: "duration" | "video-end",
     widgetOrder: string[],
     widgets: Record<string, WidgetV1>
 }

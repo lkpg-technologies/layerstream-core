@@ -119,3 +119,53 @@ test('preloads video without playing and starts it when the screen becomes activ
   await page.clock.runFor(10_000);
   await expect(video).toHaveCount(0);
 });
+
+test('video-end loops shorter videos when enabled and waits for every first playthrough', async ({ page, harness }) => {
+  const config = rotationConfig();
+  config.screens.first.playbackMode = 'video-end';
+  config.screenOrder = ['first', 'first', 'second'];
+  config.screens.first.widgets = Object.fromEntries(['a', 'b'].map(id => [id, {
+    type: 'video' as const,
+    properties: { position: { x: 0, y: 0 }, size: { w: 50, h: 100 } },
+    settings: { src: { value: 'assets/movie.webm' }, loop: { value: id === 'a' } },
+  }]));
+  config.screens.first.widgetOrder = ['a', 'b'];
+  harness.config = config;
+  await page.route('**/e2e-bundle/assets/movie.webm', route => route.fulfill({ contentType: 'video/webm', body: '' }));
+  await page.addInitScript(() => {
+    Object.defineProperty(HTMLMediaElement.prototype, 'error', { get: () => null });
+    HTMLMediaElement.prototype.load = function () {};
+    HTMLMediaElement.prototype.play = function () {
+      this.dataset.playCalls = String(Number(this.dataset.playCalls ?? 0) + 1);
+      return Promise.resolve();
+    };
+    // This test controls completion independently of decoding a media fixture.
+    document.addEventListener('error', event => {
+      if (event.target instanceof HTMLMediaElement) event.stopImmediatePropagation();
+    }, true);
+  });
+  await page.goto('/');
+  const videos = page.locator('video');
+  await expect(videos).toHaveCount(2);
+  await expect(videos.first()).toHaveJSProperty('loop', false);
+  await page.clock.runFor(25_000);
+  await expect(videos.first()).toBeVisible();
+  await videos.first().dispatchEvent('ended');
+  await expect(videos.first()).toHaveAttribute('data-play-calls', '2');
+  await expect(videos.last()).toHaveAttribute('data-play-calls', '1');
+  await videos.first().dispatchEvent('ended');
+  await expect(videos.first()).toHaveAttribute('data-play-calls', '3');
+  await expect(videos.last()).toBeVisible();
+  await videos.last().dispatchEvent('ended');
+  await expect(videos.first()).toHaveAttribute('data-play-calls', '4');
+  await expect(videos.last()).toHaveAttribute('data-play-calls', '2');
+  await videos.first().dispatchEvent('ended');
+  await expect(videos.last()).toBeVisible();
+  await videos.last().dispatchEvent('ended');
+  const second = page.locator('iframe[src="/embedded/second"]');
+  await expect(second).toBeVisible();
+  await page.clock.runFor(9_000);
+  await expect(second).toBeVisible();
+  await page.clock.runFor(1_000);
+  await expect(videos.first()).toBeVisible();
+});

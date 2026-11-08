@@ -6,7 +6,7 @@
     import type { ScreenV1 } from "./types";
     import { logError } from "../../util/utils";
 
-    const { screen, active = true }: { screen: ScreenV1, active?: boolean } = $props();
+    const { screen, active = true, playbackKey = 0, onvideofinish }: { screen: ScreenV1, active?: boolean, playbackKey?: number, onvideofinish?: (widgetId: string, played: boolean) => void } = $props();
 </script>
 <div class="screen">
     {#each screen.widgetOrder as widgetId (widgetId)}
@@ -20,7 +20,8 @@
             {:else if widget.type === "image"}
                 <ImageWidget {widget} />
             {:else if widget.type === "video"}
-                <VideoWidget {widget} {active} />
+                <VideoWidget {widget} {active} {playbackKey} waitForEnd={screen.playbackMode === "video-end"}
+                    onfinish={(played) => onvideofinish?.(widgetId, played)} />
             {/if}
         </svelte:boundary>
     {/each}
