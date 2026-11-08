@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { untrack } from "svelte";
     import Widget from "./Widget.svelte";
     import type { VideoWidgetV1 } from "../types";
     import { logError, resolvePath } from "../../../util/utils";
@@ -46,7 +45,8 @@
         if (!element) return;
         completed = false;
         if (active) {
-            if (waitForEnd && element.error) { untrack(() => finish(false)); return; }
+            // Clear a previous media error so a mounted video can retry loading.
+            if (element.error) element.load();
             element.currentTime = 0;
             play(element);
         } else {
