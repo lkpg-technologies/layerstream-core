@@ -169,3 +169,55 @@ test('video-end loops shorter videos when enabled and waits for every first play
   await page.clock.runFor(1_000);
   await expect(videos.first()).toBeVisible();
 });
+
+for (const scenario of ['loading', 'stalled', 'healthy', 'short'] as const) {
+  test(`video-end recovers from ${scenario} playback without a total-duration limit`, async ({ page, harness }) => {
+    const config = rotationConfig();
+    config.screens.first.playbackMode = 'video-end';
+    config.screens.first.widgets = {
+      video: { type: 'video', properties: { position: { x: 0, y: 0 }, size: { w: 100, h: 100 } },
+        settings: { src: { value: 'assets/movie.webm' }, loop: { value: false } } },
+    };
+    config.screens.first.widgetOrder = ['video'];
+    harness.config = config;
+    await page.route('**/e2e-bundle/assets/movie.webm', route => route.fulfill({ contentType: 'video/webm', body: '' }));
+    await page.addInitScript((scenario) => {
+      Object.defineProperty(HTMLMediaElement.prototype, 'duration', {
+        get: () => scenario === 'loading' ? NaN : scenario === 'short' ? 2 : 60,
+      });
+      Object.defineProperty(HTMLMediaElement.prototype, 'error', { get: () => null });
+      Object.defineProperty(HTMLMediaElement.prototype, 'currentTime', {
+        get() { return Number(this.dataset.position ?? 0); },
+        set(value) { this.dataset.position = String(value); },
+      });
+      HTMLMediaElement.prototype.play = () => Promise.resolve();
+      document.addEventListener('error', event => {
+        if (event.target instanceof HTMLMediaElement) event.stopImmediatePropagation();
+      }, true);
+    }, scenario);
+    await page.goto('/');
+    const video = page.locator('video');
+    await expect(video).toBeVisible();
+    if (scenario === 'stalled' || scenario === 'healthy') {
+      // Keep progressing beyond both durationSeconds and the watchdog interval.
+      for (let second = 1; second <= (scenario === 'healthy' ? 75 : 60); second++) {
+        await video.evaluate((element, time) => { (element as HTMLVideoElement).currentTime = time; }, scenario === 'healthy' ? second / 2 : second);
+        await page.clock.runFor(1_000);
+      }
+      await expect(video).toBeVisible();
+    }
+    if (scenario === 'healthy') {
+      await video.dispatchEvent('ended');
+    } else {
+      // Neither buffering events nor timeupdate without movement reset the timeout.
+      for (let second = 0; second < (scenario === 'loading' ? 29 : scenario === 'short' ? 9 : 4); second++) {
+        await video.dispatchEvent(second % 2 ? 'waiting' : 'stalled');
+        await video.dispatchEvent('timeupdate');
+        await page.clock.runFor(1_000);
+      }
+      await expect(video).toBeVisible();
+      await page.clock.runFor(1_000);
+    }
+    await expect(page.locator('iframe[src="/embedded/second"]')).toBeVisible();
+  });
+}

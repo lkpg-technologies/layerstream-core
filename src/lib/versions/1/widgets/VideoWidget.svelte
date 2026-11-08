@@ -9,12 +9,20 @@
     const src = $derived(resolvePath(widget.settings.src.value));
 
     let completed = false;
+    const NO_PROGRESS_TIMEOUT_MS = 30_000;
+    const END_GRACE_MS = 5_000;
+
+    function finish(played: boolean): void {
+        if (!active || completed) return;
+        completed = true;
+        onfinish?.(played);
+    }
 
     function play(element: HTMLVideoElement): void {
         void element.play().catch(error => {
             if (error.name !== "AbortError") {
                 logError("video playback", error);
-                if (active) onfinish?.(false);
+                finish(false);
             }
         });
     }
@@ -27,10 +35,7 @@
             video.currentTime = 0;
             play(video);
         }
-        if (!completed) {
-            completed = true;
-            onfinish?.(true);
-        }
+        finish(true);
     }
 
     $effect(() => {
@@ -41,13 +46,48 @@
         if (!element) return;
         completed = false;
         if (active) {
-            if (waitForEnd && element.error) { untrack(() => onfinish?.(false)); return; }
+            if (waitForEnd && element.error) { untrack(() => finish(false)); return; }
             element.currentTime = 0;
             play(element);
         } else {
             element.pause();
         }
-        return () => element.pause();
+        // Bound initial loading and mid-playback stalls, not total running time.
+        // Only advancing playback resets the deadline; waiting/stalled events
+        // (or repeated timeupdate events at the same position) cannot extend it.
+        let timer: ReturnType<typeof setInterval> | undefined;
+        if (active && waitForEnd) {
+            let lastTime = element.currentTime;
+            const startedAt = performance.now();
+            let lastProgressAt = startedAt;
+            timer = setInterval(() => {
+                if (completed) { clearInterval(timer); return; }
+                const now = performance.now();
+                if (element.currentTime > lastTime) {
+                    lastProgressAt = now;
+                }
+                lastTime = element.currentTime;
+                const idleMs = now - lastProgressAt;
+                // Metadata estimates when this video's first playthrough should
+                // finish. Progress always takes precedence over that estimate.
+                // The scheduler waits for every video, including the longest.
+                const duration = element.duration;
+                const rate = element.playbackRate;
+                const expectedEnd = Number.isFinite(duration) && duration > 0 && rate > 0
+                    ? startedAt + duration / rate * 1000 : Infinity;
+                const overdue = now >= expectedEnd + END_GRACE_MS;
+                if (idleMs >= NO_PROGRESS_TIMEOUT_MS || (overdue && idleMs >= END_GRACE_MS)) {
+                    clearInterval(timer);
+                    element.pause();
+                    logError("video playback", new Error("Video timed out without playback progress"));
+                    finish(false);
+                }
+            }, 1_000);
+        }
+        return () => {
+            clearInterval(timer);
+            element.pause();
+        };
     });
 </script>
 
@@ -56,7 +96,7 @@
     <video bind:this={video} {src} preload="auto" playsinline
         loop={!waitForEnd && (widget.settings.loop?.value ?? true)}
         onended={ended}
-        onerror={() => { if (active) onfinish?.(false); }}
+        onerror={() => finish(false)}
         muted={widget.settings.muted?.value ?? true}
         style:object-fit={widget.settings.fit?.value ?? "contain"}
     ></video>
