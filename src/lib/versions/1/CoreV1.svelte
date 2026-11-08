@@ -36,7 +36,8 @@
 
     function videoFinished(screenId: string, widgetId: string, played: boolean): void {
         if (!sequential || screenId !== currentScreen) return;
-        finishedVideos.set(widgetId, played);
+        // Keep a successful first playthrough even if a later loop fails.
+        finishedVideos.set(widgetId, finishedVideos.get(widgetId) === true || played);
         updateCurrentScreen();
     }
 
