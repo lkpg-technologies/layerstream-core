@@ -6,9 +6,7 @@
     import { logError } from "../../util/utils";
 
     // The upcoming screen is mounted invisibly this long before it is shown,
-    // so its iframes have loaded by the time it appears
-    //
-    // Keeping this for now, TODO: Check so that video still starts on page-change and not 5 seconds before (when video is added) - Ludvig
+    // so its media and iframes can load before it appears. Videos wait until active.
     const PRELOAD_MS = 5_000;
 
     const { config }: { config: ConfigV1 } = $props();
@@ -53,7 +51,7 @@
     {#each mountedScreens as id (id)}
         <div class="screen-slot" class:preloading={id !== currentScreen}>
             <svelte:boundary onerror={(error) => logError(`screen ${id}`, error)}>
-                <PageV1 screen={config.screens[id]}/>
+                <PageV1 screen={config.screens[id]} active={id === currentScreen}/>
             </svelte:boundary>
         </div>
     {/each}

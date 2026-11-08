@@ -86,3 +86,36 @@ test('drops invalid config entries while valid content keeps rotating', async ({
   await expect(page.locator('iframe[src="/embedded/first"]')).toBeVisible();
   expect(harness.configRequests).toBe(1);
 });
+
+test('preloads video without playing and starts it when the screen becomes active', async ({ page, harness }) => {
+  const config = rotationConfig();
+  config.screens.second.widgets = {
+    video: { type: 'video', properties: { position: { x: 0, y: 0 }, size: { w: 44, h: 100 } },
+      settings: { src: { value: 'assets/movie.webm' }, fit: { value: 'contain' },
+        loop: { value: true }, muted: { value: true } } },
+  };
+  config.screens.second.widgetOrder = ['video'];
+  harness.config = config;
+  await page.route('**/e2e-bundle/assets/movie.webm', route => route.fulfill({ contentType: 'video/webm', body: '' }));
+  // Observe playback requests independently of codec support and browser autoplay policy.
+  await page.addInitScript(() => {
+    HTMLMediaElement.prototype.play = function () {
+      this.dataset.playCalls = String(Number(this.dataset.playCalls ?? 0) + 1);
+      return Promise.resolve();
+    };
+  });
+  await page.goto('/');
+  await page.clock.runFor(5_000);
+  const video = page.locator('video');
+  await expect(video).toHaveCount(1);
+  await expect(video).toBeHidden();
+  await expect(video).not.toHaveAttribute('data-play-calls');
+  await expect(video).toHaveJSProperty('muted', true);
+  await expect(video).toHaveJSProperty('loop', true);
+  await page.clock.runFor(5_000);
+  await expect(video).toBeVisible();
+  await expect(video).toHaveAttribute('data-play-calls', '1');
+  await expect(video).toHaveCSS('object-fit', 'contain');
+  await page.clock.runFor(10_000);
+  await expect(video).toHaveCount(0);
+});

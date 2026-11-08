@@ -1,10 +1,12 @@
 <script lang="ts">
+    import ImageWidget from "./widgets/ImageWidget.svelte";
+    import VideoWidget from "./widgets/VideoWidget.svelte";
     import ColorWidget from "./widgets/ColorWidget.svelte";
     import WebpageWidget from "./widgets/WebpageWidget.svelte";
     import type { ScreenV1 } from "./types";
     import { logError } from "../../util/utils";
 
-    const { screen }: { screen: ScreenV1 } = $props();
+    const { screen, active = true }: { screen: ScreenV1, active?: boolean } = $props();
 </script>
 <div class="screen">
     {#each screen.widgetOrder as widgetId (widgetId)}
@@ -15,6 +17,10 @@
                 <ColorWidget {widget} />
             {:else if widget.type === "webpage"}
                 <WebpageWidget {widget} />
+            {:else if widget.type === "image"}
+                <ImageWidget {widget} />
+            {:else if widget.type === "video"}
+                <VideoWidget {widget} {active} />
             {/if}
         </svelte:boundary>
     {/each}
