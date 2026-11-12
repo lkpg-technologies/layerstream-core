@@ -7,8 +7,8 @@ export function msUntilNextSecond(now = Date.now()): number {
     return 1000 - (now % 1000);
 }
 
-/** The active screen's index and how long until the rotation moves on from it. */
-export function getScreenTiming(screens: ScreenV1[], now = Date.now()): { index: number; msRemaining: number } | undefined {
+/** The active screen's index, wall-clock cycle, and how long until the rotation moves on from it. */
+export function getScreenTiming(screens: ScreenV1[], now = Date.now()): { index: number; cycle: number; msRemaining: number } | undefined {
     const cycleMs = screens.reduce((sum, screen) => sum + screen.durationSeconds * 1000, 0);
     if (!(cycleMs > 0)) return undefined;
 
@@ -16,7 +16,7 @@ export function getScreenTiming(screens: ScreenV1[], now = Date.now()): { index:
     let cursor = 0;
     for (let index = 0; index < screens.length; index++) {
         cursor += screens[index].durationSeconds * 1000;
-        if (position < cursor) return { index, msRemaining: cursor - position };
+        if (position < cursor) return { index, cycle: Math.floor(now / cycleMs), msRemaining: cursor - position };
     }
     return undefined;
 }
