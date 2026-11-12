@@ -12,6 +12,16 @@ function isValidWidget(widget: unknown): widget is WidgetV1 {
     if (!isObject(properties.position) || !isFiniteNumber(properties.position.x) || !isFiniteNumber(properties.position.y)) return false;
     if (widget.type === "color") return hasStringSetting(widget, "color");
     if (widget.type === "webpage") return hasStringSetting(widget, "webpage");
+    if (widget.type === "image" || widget.type === "video") {
+        if (!hasStringSetting(widget, "src") || !settings.src.value.trim()) return false;
+        if (settings.fit !== undefined && (!isObject(settings.fit) ||
+            !["contain", "cover", "fill", "none", "scale-down"].includes(settings.fit.value))) return false;
+        if (widget.type === "video") {
+            for (const key of ["loop", "muted"]) {
+                if (settings[key] !== undefined && (!isObject(settings[key]) || typeof settings[key].value !== "boolean")) return false;
+            }
+        }
+    }
     return true;
 }
 

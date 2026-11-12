@@ -1,10 +1,12 @@
 <script lang="ts">
+    import ImageWidget from "./widgets/ImageWidget.svelte";
+    import VideoWidget from "./widgets/VideoWidget.svelte";
     import ColorWidget from "./widgets/ColorWidget.svelte";
     import WebpageWidget from "./widgets/WebpageWidget.svelte";
     import type { ScreenV1 } from "./types";
     import { logError } from "../../util/utils";
 
-    const { screen }: { screen: ScreenV1 } = $props();
+    const { screen, active = true, playbackKey = 0, onvideofinish }: { screen: ScreenV1, active?: boolean, playbackKey?: number, onvideofinish?: (widgetId: string, played: boolean) => void } = $props();
 </script>
 <div class="screen">
     {#each screen.widgetOrder as widgetId (widgetId)}
@@ -15,6 +17,11 @@
                 <ColorWidget {widget} />
             {:else if widget.type === "webpage"}
                 <WebpageWidget {widget} />
+            {:else if widget.type === "image"}
+                <ImageWidget {widget} />
+            {:else if widget.type === "video"}
+                <VideoWidget {widget} {active} {playbackKey} waitForEnd={screen.playbackMode === "video-end"}
+                    onfinish={(played) => onvideofinish?.(widgetId, played)} />
             {/if}
         </svelte:boundary>
     {/each}

@@ -92,3 +92,28 @@ it("preserves percentage geometry, widget order, and unsupported-type behavior",
     expect(body.indexOf("#123456")).toBeLessThan(body.indexOf("<iframe"));
     expect(body).not.toContain("#abcdef");
 });
+
+it("renders bundle media in widget order with configured fit and playback flags", () => {
+    const { body } = render(PageV1, {
+        props: { screen: {
+            id: "media", name: "Media", durationSeconds: 10,
+            widgetOrder: ["image", "video"],
+            widgets: {
+                image: { type: "image", properties: widget.properties, settings: {
+                    src: { value: "assets/photo.jpg" }, fit: { value: "cover" },
+                } },
+                video: { type: "video", properties: widget.properties, settings: {
+                    src: { value: "assets/movie.webm" }, fit: { value: "contain" },
+                    loop: { value: false }, muted: { value: false },
+                } },
+            },
+        } },
+    });
+    expect(body).toContain('src="current/assets/photo.jpg"');
+    expect(body).toContain('src="current/assets/movie.webm"');
+    expect(body).toContain('object-fit: cover');
+    expect(body).toContain('object-fit: contain');
+    expect(body.indexOf('<img')).toBeLessThan(body.indexOf('<video'));
+    expect(body).toContain('playsinline');
+    expect(body).not.toMatch(/\s(loop|muted|autoplay)(?:[\s=>])/);
+});
